@@ -1,4 +1,11 @@
-this_file_is_unedited: TRUE
+## This config file will not generate a makefile as currently configured.
+## We want to show all of the options available, even though some are not appropriately general for this scope
+## In particular, importation and the associated FolderDraw seeding method only work for sets of US states.
+## The comments in this file explain how to modify it based on your use case
+## Items that must be changed for the process to work are designated by < >.
+## Some items in the config can be removed, and we have tried to note these with comments as well.
+
+this_file_is_unedited: TRUE # This config file does not work as presented.  There are a few additional files
 name: minimal
 start_date: 2020-01-31
 end_date: 2020-05-31
@@ -10,18 +17,18 @@ spatial_setup:
   census_year: 2010
   base_path: data
   modeled_states: # To model a region that is not a state, remove modeled_states and the importation: block
-   - <Your State Postal Code>
+   - <Your State Postal Code> # e.g., MD  You can provide as many of these as you like, but more counties means slower runs
   setup_name: minimal
   geodata: geodata.csv
   mobility: mobility.txt
   popnodes: population
   nodenames: geoid
   include_in_report: include_in_report
-  shapefile: <shapefile.shp>
-  shapefile_name:  <shapefile.shp>
+  shapefile: <shapefile.shp> # We haven't created fake shapefiles yet.  Stay tuned.
+  shapefile_name:  <shapefile.shp> # This should be the same as above.  We are working to merge the two
 
 importation: ## You can seed the SEIR model directly instead of using importation.  To do so, comment out this block
-  census_api_key: <your census api key>
+  census_api_key: <your census api key> # For use with the tidycensus package
   travel_dispersion: 3
   maximum_destinations: Inf
   dest_type : state
@@ -117,6 +124,10 @@ hospitalization:
     p_ICU: 0.32
     p_vent: 0.15
 
+## Report generation is still in it's infancy.
+## The parameters in this block are only used in our draft state_report rmarkdown template 
+## This section can be removed if you are not using that template.
+## Many of the parameters in this section may be broken, as that report has been under a lot of development recently.
 report:
   data_settings:
     pop_year: 2010
