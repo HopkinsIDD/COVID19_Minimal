@@ -1,3 +1,4 @@
+this_file_is_unedited: TRUE
 name: minimal
 start_date: 2020-01-31
 end_date: 2020-05-31
@@ -6,13 +7,62 @@ dt: 0.25
 dynfilter_path: data/filter.txt
 
 spatial_setup:
+  census_year: 2010
   base_path: data
-
+  modeled_states: # To model a region that is not a state, remove modeled_states and the importation: block
+   - <Your State Postal Code>
   setup_name: minimal
   geodata: geodata.csv
   mobility: mobility.txt
   popnodes: population
+  nodenames: geoid
   include_in_report: include_in_report
+  shapefile: <shapefile.shp>
+  shapefile_name:  <shapefile.shp>
+
+importation: ## You can seed the SEIR model directly instead of using importation.  To do so, comment out this block
+  census_api_key: <your census api key>
+  travel_dispersion: 3
+  maximum_destinations: Inf
+  dest_type : state
+  dest_country : USA
+  aggregate_to: airport
+  cache_work: TRUE
+  update_case_data: TRUE
+  draw_travel_from_distribution: FALSE
+  print_progress: FALSE
+  travelers_threshold: 10000
+  airport_cluster_distance: 80
+  param_list:
+    incub_mean_log: log(5.89)
+    incub_sd_log: log(1.74)
+    inf_period_nohosp_mean: 15
+    inf_period_nohosp_sd: 5
+    inf_period_hosp_shape: 0.75
+    inf_period_hosp_scale: 5.367
+    p_report_source: [0.05, 0.25]
+    shift_incid_days: -10
+    delta: 1
+
+seeding: ## If removing the importation, comment out this seeding block
+  method: FolderDraw
+  folder_path: importation/minimal/
+
+# seeding: ## If removing importation, uncomment this seeding block
+#   method: PoissonDistributed
+#   lambda_file: data/minimal/seeding.csv
+
+seir:
+  parameters:
+    sigma: 1 / 5.2
+    gamma:
+      distribution: uniform
+      low: 1 / 6
+      high: 1 / 2.6
+    R0s:
+      distribution: uniform
+      low: 2
+      high: 3
 
 interventions:
   scenarios:
@@ -51,18 +101,6 @@ interventions:
       template: Stacked
       scenarios:
         - Wuhan
-seir:
-  parameters:
-    sigma: 1 / 5.2
-    gamma:
-      distribution: uniform
-      low: 1 / 6
-      high: 1 / 2.6
-    R0s:
-      distribution: uniform
-      low: 2
-      high: 3
-
 hospitalization:
   paths:
     output_path: hospitalization
@@ -71,14 +109,72 @@ hospitalization:
     time_disch: [log(11.5), log(1.22)]
     time_death: [log(11.25), log(1.15)]
     time_ICU: [log(8.25), log(2.2)]
-    time_ICUdur: [log(17.46), log(4.044)]
+    time_ICUdur: [log(16), log(2.96)]
     time_vent: [log(10.5), log((10.5-8)/1.35)]
-    mean_inc: 5.2
-    dur_inf_shape: 2
-    dur_inf_scale: 3
-    end_date: 2020-10-01
     p_death: [.0025, .005, .01]
     p_death_names: ["low","med","high"]
     p_death_rate: 0.1
-    p_ICU: 0.264
+    p_ICU: 0.32
     p_vent: 0.15
+
+report:
+  data_settings:
+    pop_year: 2010
+  plot_settings:
+    plot_intervention: TRUE
+    parameters_to_display:
+      sigma:
+        type: seir
+        distribution: exp
+        formal_name: Incubation Period
+        transform: invert
+        xlab: Days since symptom onset
+      gamma:
+        type: seir
+        distribution: gamma
+        formal_name: Duration of Infectiousness
+        transform: invert
+        xlab: Days since symptom onset
+      time_hosp:
+        type: hospitalization
+        distribution: lnormal
+        formal_name: Time to Hospitalization
+        xlab: Days since symptom onset
+        xlim: [0,100]
+      time_disch:
+        type: hospitalization
+        distribution: lnormal
+        formal_name: Time to Discharge
+        xlab: Days since hospitalization
+      time_ICU:
+        type: hospitalization
+        distribution: lnormal
+        formal_name: Time to ICU Admission
+        xlab: Days since hospitalization
+        xlim: [0,100]
+      time_ICUdur:
+        type: hospitalization
+        distribution: lnormal
+        formal_name: Time in ICU
+        xlab: Days since ICU admission
+        xlim: [0,100]
+      time_death:
+        type: hospitalization
+        distribution: lnormal
+        formal_name: Time to Death
+        xlab: Days since hopitalization
+      time_vent:
+        type: hospitalization
+        distribution: lnormal
+        formal_name: Time to Ventilation
+        xlab: Days since ICU admission
+        xlim: [0,100]
+  formatting:
+    scenario_labels_short: []
+    scenario_labels:
+    - Lockdown followed by Worst Case Uncontrolled Spread
+    - Lockdown followed by Test and Isolate
+    - Lockdown followed by Moderate Social Distancing
+    scenario_colors: ["#D95F02", "#1B9E77", "#7570B3"]
+    pdeath_labels: ["0.25% IFR", "0.5% IFR", "1% IFR"]
+    display_dates: ["2020-05-01", "2020-07-01", "2020-09-01"]

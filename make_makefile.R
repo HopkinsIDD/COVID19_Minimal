@@ -1,6 +1,12 @@
 config_file = ("config.yml")
 
 config = covidcommon::load_config(config_file)
+if(isTRUE(config$this_file_is_unedited)){
+  stop(paste(
+    "Please make minimal edits to the config file before running this script.
+    The config file details which edits to make in it's comments."
+  ))
+}
 
 simulations = config$nsimulations
 scenarios = config$interventions$scenarios
@@ -12,6 +18,45 @@ cat(scenarios)
 cat("\n")
 cat(deathrates)
 cat("\n")
+
+using_importation <- FALSE
+if("importation" %in% names(config)){
+  using_importation <- TRUE
+}
+
+importation_target_name <- function(simulation, prefix = ""){
+  paste0(".files/",prefix,simulation,"_importation")
+}
+
+importation_make_command <- function(simulation,prefix=""){
+  target_name <- importation_target_name(simulation,prefix)
+  dependency_name <- ""
+  command_name <- paste0("$(RSCRIPT) $(PIPELINE)/R/scripts/importation.R -c  $(CONFIG)")
+  touch_name <- paste0("touch ",target_name)
+  return(paste0(
+    target_name, ": ",
+    dependency_name, "\n", 
+    "\t",command_name, "\n",
+    "\t",touch_name, "\n"
+  ))
+}
+
+filter_target_name <- function(simulation, prefix = "" ){
+  paste0(".files/",prefix,simulation,"_filter")
+}
+
+filter_make_command <- function(simulation,prefix=""){
+  target_name <- filter_target_name(simulation,prefix)
+  dependency_name <- importation_target_name(simulation, prefix=prefix)
+  command_name<- paste0("$(RSCRIPT) $(PIPELINE)/R/scripts/create_filter.R -c $(CONFIG)")
+  touch_name <- paste0("touch ",target_name)
+  return(paste0(
+    target_name, ": ",
+    dependency_name, "\n", 
+    "\t",command_name, "\n",
+    "\t",touch_name, "\n"
+  ))
+}
 
 hospitalizaiton_target_name <- function(simulation,scenario,deathrate, prefix = ''){
   paste0(".files/",prefix,simulation,"_hospitalization_",scenario,"_",deathrate)
@@ -41,6 +86,9 @@ simulation_make_command <- function(simulation,scenario,previous_simulation, pre
     dependency_name <- simulation_target_name(previous_simulation,scenario, prefix = prefix)
   } else {
     previous_simulation <- 0
+  }
+  if(using_importation){
+    dependency_name <- paste(dependency_name,filter_target_name(simulation,prefix),importation_target_name(simulation,prefix))
   }
   command_name <- paste0("$(PYTHON) $(PIPELINE)/simulate.py -c $(CONFIG) -s ",scenario," -n ",simulation - previous_simulation," -j $(NCOREPER)")
   touch_name <- paste0("touch ",target_name)
@@ -75,7 +123,15 @@ for(scenario in scenarios){
     cat(hospitalizaiton_target_name(simulations,scenario,deathrate))
   }
 }
-cat("\n	Rscript compile_Rmd.R\n")
+cat("\n\tRscript compile_Rmd.R\n")
+
+if(using_importation){
+  for(sim_idx in seq_len(length(simulations))){
+    
+    cat(filter_make_command(simulations[sim_idx]))
+    cat(importation_make_command(simulations[sim_idx]))
+  }
+}
 
 for(sim_idx in seq_len(length(simulations))){
   sim <- simulations[sim_idx]
@@ -88,41 +144,40 @@ for(sim_idx in seq_len(length(simulations))){
   }
 }
 
-cat("
+cat(paste0("
 
-rerun: rerun_simulations rerun_hospitalization
+rerun: rerun_simulations rerun_hospitalization"
+))
+
+if(using_importation){
+  cat(paste0("rerun_importation rerun_filter
+clean_filter: rerun_filter
+\trm -rf ",config$dynfilter_path,"
+clean_importation: rerun_importation
+\trm -rf importation
+"))
+}
+cat(paste0("
+rerun_filter:
+\trm -f .files/1*_filter
+rerun_importation:
+\trm -f .files/1*_importation
 rerun_simulations: clean_simulations
-	rm -f .files/1*_simulation*
+\trm -f .files/1*_simulation*
 rerun_hospitalization:
-	rm -f .files/1*_hospitalization*
-clean: clean_simulations clean_hospitalization clean_reports
+\trm -f .files/1*_hospitalization*
+clean: clean_simulations clean_hospitalization clean_reports"
+))
+if(using_importation){
+  cat(" clean_importation clean_filter")
+}
+cat(paste0("
 clean_reports:
-	rm -f notebooks/*.html
+\trm -f notebooks/*.html
 clean_simulations: rerun_simulations
-	rm -rf model_output
+\trm -rf model_output
 clean_hospitalization: rerun_hospitalization
-	rm -rf hospitalization
-")
+\trm -rf hospitalization
+"))
 
-cat("production_report:")
-for(scenario in scenarios){
-  cat(" ")
-  cat(simulation_target_name(simulations[length(simulations)],scenario, prefix='production_'))
-  for(deathrate in deathrates){
-    cat(" ")
-    cat('production_',hospitalizaiton_target_name(simulations[length(simulations)],scenario, deathrate,prefix='production_'))
-  }
-}
-cat("\n	Rscript compile_Rmd.R\n")
-
-for(sim_idx in seq_len(length(simulations))){
-  sim <- simulations[sim_idx]
-  prev_sim <- dplyr::lag(simulations)[sim_idx]
-  for(scenario in scenarios){
-    cat(simulation_make_command(sim,scenario,NA,prefix='production_'))
-    for(deathrate in deathrates){
-      cat(hospitalizaiton_make_command(sim,scenario,deathrate,prefix='production_'))
-    }
-  }
-}
 sink(NULL)
