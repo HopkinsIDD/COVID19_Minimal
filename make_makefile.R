@@ -31,7 +31,7 @@ importation_target_name <- function(simulation, prefix = ""){
 importation_make_command <- function(simulation,prefix=""){
   target_name <- importation_target_name(simulation,prefix)
   dependency_name <- ""
-  command_name <- paste0("$(RSCRIPT) $(PIPELINE)/R/scripts/importation.R -c  $(CONFIG)")
+  command_name <- paste0("$(RSCRIPT) $(PIPELINE)/R/scripts/importation.R -c  $(CONFIG) -j $(NCOREPER)")
   touch_name <- paste0("touch ",target_name)
   return(paste0(
     target_name, ": ",
@@ -106,7 +106,7 @@ sink("Makefile")
 cat("
 .PHONY: rerun rerun_simulations rerun_hospitalization clean_hospitalization clean clean_simulations
 
-NCOREPER=4
+NCOREPER=1
 RSCRIPT=Rscript
 PYTHON=python3
 PIPELINE=COVIDScenarioPipeline/
