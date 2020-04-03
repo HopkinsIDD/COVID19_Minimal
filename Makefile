@@ -13,25 +13,25 @@ report: .files/15_simulation_None .files/15_hospitalization_None_low .files/15_h
 	$(PYTHON) $(PIPELINE)/simulate.py -c $(CONFIG) -s None -n 15 -j $(NCOREPER)
 	touch .files/15_simulation_None
 .files/15_hospitalization_None_low: .files/15_simulation_None
-	$(RSCRIPT) $(PIPELINE)/R/scripts/hosp_run.R -s None -d low -j $(NCOREPER)
+	$(RSCRIPT) $(PIPELINE)/R/scripts/hosp_run.R -s None -d low -j $(NCOREPER) -c $(CONFIG)
 	touch .files/15_hospitalization_None_low
 .files/15_hospitalization_None_med: .files/15_simulation_None
-	$(RSCRIPT) $(PIPELINE)/R/scripts/hosp_run.R -s None -d med -j $(NCOREPER)
+	$(RSCRIPT) $(PIPELINE)/R/scripts/hosp_run.R -s None -d med -j $(NCOREPER) -c $(CONFIG)
 	touch .files/15_hospitalization_None_med
 .files/15_hospitalization_None_high: .files/15_simulation_None
-	$(RSCRIPT) $(PIPELINE)/R/scripts/hosp_run.R -s None -d high -j $(NCOREPER)
+	$(RSCRIPT) $(PIPELINE)/R/scripts/hosp_run.R -s None -d high -j $(NCOREPER) -c $(CONFIG)
 	touch .files/15_hospitalization_None_high
 .files/15_simulation_Scenario1: 
 	$(PYTHON) $(PIPELINE)/simulate.py -c $(CONFIG) -s Scenario1 -n 15 -j $(NCOREPER)
 	touch .files/15_simulation_Scenario1
 .files/15_hospitalization_Scenario1_low: .files/15_simulation_Scenario1
-	$(RSCRIPT) $(PIPELINE)/R/scripts/hosp_run.R -s Scenario1 -d low -j $(NCOREPER)
+	$(RSCRIPT) $(PIPELINE)/R/scripts/hosp_run.R -s Scenario1 -d low -j $(NCOREPER) -c $(CONFIG)
 	touch .files/15_hospitalization_Scenario1_low
 .files/15_hospitalization_Scenario1_med: .files/15_simulation_Scenario1
-	$(RSCRIPT) $(PIPELINE)/R/scripts/hosp_run.R -s Scenario1 -d med -j $(NCOREPER)
+	$(RSCRIPT) $(PIPELINE)/R/scripts/hosp_run.R -s Scenario1 -d med -j $(NCOREPER) -c $(CONFIG)
 	touch .files/15_hospitalization_Scenario1_med
 .files/15_hospitalization_Scenario1_high: .files/15_simulation_Scenario1
-	$(RSCRIPT) $(PIPELINE)/R/scripts/hosp_run.R -s Scenario1 -d high -j $(NCOREPER)
+	$(RSCRIPT) $(PIPELINE)/R/scripts/hosp_run.R -s Scenario1 -d high -j $(NCOREPER) -c $(CONFIG)
 	touch .files/15_hospitalization_Scenario1_high
 
 
