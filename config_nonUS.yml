@@ -1,4 +1,5 @@
 
+this_file_is_unedited: TRUE # This config file does not work as presented.  There are a few additional files
 name: Westeros
 start_date: 2020-03-01
 end_date: 2020-12-31
