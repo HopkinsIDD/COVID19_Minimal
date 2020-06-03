@@ -22,6 +22,7 @@ spatial_setup:
   include_in_report: include_in_report
   shapefile: geodata/Westeros/Westeros_districts.shp 
   shapefile_name: geodata/Westeros/Westeros_districts.shp
+  geoid_params_file: data/geoid-params.csv
 
 # importation: 
 #   census_api_key: <insert-api-key> # For use with the tidycensus package
